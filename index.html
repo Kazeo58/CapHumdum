@@ -107,11 +107,11 @@ const COL=['#e5372d','#2f7df6','#f5b800','#8f4fe0'];
 const GC=['#8d5a3b','#0e9ad6','#f08a1c','#d6307a','#d93a2f','#c79200','#1f9d63','#4b3fc4'];
 const P=(n,pr,g)=>({k:'p',n,pr,g}),S=(k,n,e)=>({k,n,e}),F=(n,pr,ic)=>({k:'f',n,pr,ic,g:9});
 GC[9]='#4a5a6a';
-const N=32,JAIL=8,FB=[0,20,40,80,150],RPS_WIN=100,RPS_STEAL=false,TR_BONUS=100;
+const N=32,JAIL=8,FB=[0,60,150,300,600],RPS_WIN=100,RPS_STEAL=false,TR_BONUS=100;
 const T=[S('go','เริ่มต้น',''),P('ลาว',60,0),S('ch','โชค',''),P('กัมพูชา',60,0),F('สนามบิน',200,'air'),P('เวียดนาม',100,1),S('tax','ภาษี',''),P('มาเลเซีย',100,1),S('jail','คุก',''),
-P('อินเดีย',140,2),P('บราซิล',140,2),S('ln','กู้เงิน',''),F('ท่าเรือ',200,'port'),P('เม็กซิโก',160,2),P('อียิปต์',180,3),P('ตุรกี',180,3),S('park','จอดพัก',''),
-P('รัสเซีย',220,4),S('cd','จั่วการ์ด',''),P('จีน',240,4),F('รถไฟ',200,'rail'),P('เกาหลี',220,4),P('อิตาลี',260,5),P('สเปน',260,5),S('gj','ไปคุก',''),
-P('เยอรมนี',300,6),P('อังกฤษ',300,6),S('tr','แลกเมือง',''),F('โรงไฟฟ้า',200,'bolt'),P('ฝรั่งเศส',320,6),P('ญี่ปุ่น',380,7),P('อเมริกา',420,7)];
+P('อินเดีย',140,2),P('บราซิล',140,2),P('เม็กซิโก',160,2),F('ท่าเรือ',200,'port'),S('ln','กู้เงิน',''),P('อียิปต์',180,3),P('ตุรกี',180,3),S('park','จอดพัก',''),
+P('รัสเซีย',220,4),P('เกาหลี',220,4),P('จีน',240,4),F('รถไฟ',200,'rail'),S('cd','จั่วการ์ด',''),P('อิตาลี',260,5),P('สเปน',260,5),S('gj','ไปคุก',''),
+P('เยอรมนี',300,6),P('อังกฤษ',300,6),P('ฝรั่งเศส',320,6),F('โรงไฟฟ้า',200,'bolt'),S('tr','แลกเมือง',''),P('ญี่ปุ่น',380,7),P('อเมริกา',420,7)];
 const CARDS=[['ถูกลอตเตอรี่ +150',150],['ค่าซ่อมรถ -80',-80],['ได้เงินปันผล +100',100],['ค่าปรับจราจร -50',-50],['ไปเที่ยวทะเล รับ 200 ที่จุดเริ่มต้น','go'],['ถูกจับ ไปคุก!','jail']];
 const DP=[[4],[0,8],[0,4,8],[0,2,6,8],[0,2,4,6,8],[0,2,3,5,6,8]];
 const die=n=>`<svg class="die" viewBox="0 0 30 30"><rect width="30" height="30" rx="6" fill="#fff"/>${DP[n-1].map(k=>`<circle cx="${8+k%3*7}" cy="${8+(k/3|0)*7}" r="2.6" fill="#1b2430"/>`).join('')}</svg>`;
@@ -133,7 +133,8 @@ let peer,hostConn,lobby=[],st=null,me=-1,isHost=false,code='';
 
 /* ---------- helpers ---------- */
 const full=(o,g)=>T.every((t,i)=>t.g!==g||st.own[i]===o);
-const rent=i=>{const t=T[i];if(t.k==='f'){const o=st.own[i];return FB[T.reduce((a,x,k)=>a+(x.k==='f'&&st.own[k]===o?1:0),0)]}const l=st.lv[i]||0;let r=t.pr/10*[1,2,4,7][l];if(!l&&full(st.own[i],t.g))r*=2;return Math.round(r)};
+const rent=i=>{const t=T[i];if(t.k==='f'){const o=st.own[i];return FB[T.reduce((a,x,k)=>a+(x.k==='f'&&st.own[k]===o?1:0),0)]}const l=st.lv[i]||0;let r=t.pr*RENT_M[l];if(!l&&full(st.own[i],t.g))r*=2;return Math.round(r)};
+const RENT_M=[.2,.5,1.2,2.2];
 const bcost=i=>Math.round(T[i].pr/20)*10;
 const L=m=>{st.ln=(st.ln||0)+1;st.log.push(m);if(st.log.length>6)st.log.shift()};
 const rnd=()=>1+Math.floor(Math.random()*6);
@@ -485,7 +486,7 @@ function showDecide(){
   if(st.ph==='trade'){trM=null;tradeStep();return}
   const p=st.pl[me],t=T[p.pos],gb='style="color:#1b2430;background:#0001"',cd='<div class="sm" style="color:#1b2430;text-align:center">เหลือเวลา <span id="mcd">30</span> วิ</div>';
   mo.innerHTML=st.ph==='buy'
-   ?`<div class="box" style="padding:0;overflow:hidden;width:min(100%,320px);gap:0"><div style="background:${GC[t.g]};color:#fff;padding:18px;text-align:center"><div style="font-size:14px;opacity:.9">คุณมาถึง</div><div class="t" style="font-size:32px">${t.n}</div></div><div style="padding:16px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;font-size:16px"><span>ราคา</span><b>฿${t.pr}</b></div><div style="display:flex;justify-content:space-between"><span>ค่าเช่า</span><b>฿${t.k==='f'?FB[1]:t.pr/10}</b></div><div style="display:flex;justify-content:space-between"><span>เงินสดหลังซื้อ</span><b>฿${(p.m-t.pr).toLocaleString()}</b></div><button class="btn" onclick="decide('buy')">ซื้อ ฿${t.pr}</button><button class="btn g" ${gb} onclick="decide('skip')">ไม่ซื้อ</button>${cd}</div></div>`
+   ?`<div class="box" style="padding:0;overflow:hidden;width:min(100%,320px);gap:0"><div style="background:${GC[t.g]};color:#fff;padding:18px;text-align:center"><div style="font-size:14px;opacity:.9">คุณมาถึง</div><div class="t" style="font-size:32px">${t.n}</div></div><div style="padding:16px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;font-size:16px"><span>ราคา</span><b>฿${t.pr}</b></div><div style="display:flex;justify-content:space-between"><span>ค่าเช่า</span><b>฿${t.k==='f'?FB[1]:Math.round(t.pr*RENT_M[0])}</b></div><div style="display:flex;justify-content:space-between"><span>เงินสดหลังซื้อ</span><b>฿${(p.m-t.pr).toLocaleString()}</b></div><button class="btn" onclick="decide('buy')">ซื้อ ฿${t.pr}</button><button class="btn g" ${gb} onclick="decide('skip')">ไม่ซื้อ</button>${cd}</div></div>`
    :`<div class="box"><div class="t" style="font-size:24px;text-align:center">ช่องกู้เงิน</div><div class="sm" style="color:#1b2430;text-align:center">ยืม ฿1,000 ต้องคืนใน 5 เทิร์น</div>${st.pl.map((q,k)=>k!==me&&!q.out&&q.m>=1000?`<button class="btn" onclick="decide('loan',${k})">ยืมจาก ${esc(q.n)}</button>`:'').join('')}<button class="btn g" ${gb} onclick="decide('skip')">ไม่ยืม</button>${cd}</div>`;
   mo.classList.add('on');
 }
@@ -506,8 +507,8 @@ function info(i){
   const canB=t.k==='p'&&o!=null&&o===me&&st.turn===me&&full(me,t.g)&&l<3&&!st.flood[i]&&st.pl[me].m>=bcost(i)&&st.win==null;
   m.innerHTML=`<div class="box" onclick="event.stopPropagation()"><div class="t" style="font-size:20px"><span style="color:${GC[t.g]}">●</span> ${t.n}</div>
   <div>ราคา ฿${t.pr}</div><div>เจ้าของ: ${o!=null?esc(st.pl[o].n):'ยังไม่มี'}</div>
-  <div>ค่าเช่า: ฿${o!=null?rent(i):(t.k==='f'?FB[1]:t.pr/10)} ${l?'(บ้าน '+l+')':''}</div>
-  <div style="font-size:12px;opacity:.7">${t.k==='f'?'ยิ่งถือสนามบิน ท่าเรือ รถไฟ โรงไฟฟ้าหลายแห่ง ค่าเช่ายิ่งแพง (฿20 / 40 / 80 / 150)':'ถือครองทั้งสีได้ค่าเช่า ×2 และสร้างบ้านได้สูงสุด 3 หลัง (฿'+bcost(i)+'/หลัง)'}</div>
+  <div>ค่าเช่า: ฿${o!=null?rent(i):(t.k==='f'?FB[1]:Math.round(t.pr*RENT_M[0]))} ${l?'(บ้าน '+l+')':''}</div>
+  <div style="font-size:12px;opacity:.7">${t.k==='f'?'ยิ่งถือสนามบิน ท่าเรือ รถไฟ โรงไฟฟ้าหลายแห่ง ค่าเช่ายิ่งแพง (฿60 / 150 / 300 / 600)':'ถือครองทั้งสีได้ค่าเช่า ×2 และสร้างบ้านได้สูงสุด 3 หลัง (฿'+bcost(i)+'/หลัง)<br>ค่าเช่าตามบ้าน 0/1/2/3 หลัง: ฿'+RENT_M.map(m=>Math.round(t.pr*m)).join(' / ฿')}</div>
   ${canB?`<button class="btn" onclick="send('build',${i});$('#modal').classList.remove('on')">สร้างบ้าน ฿${bcost(i)}</button>`:''}
   <button class="btn g" style="color:var(--ink);background:#0001" onclick="$('#modal').classList.remove('on')">ปิด</button></div>`;
   m.classList.add('on');
